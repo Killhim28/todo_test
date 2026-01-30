@@ -1,16 +1,12 @@
 # todo_test
 
-A new Flutter project.
+Учебное приложение для управления задачами на Flutter.
+Создано с целью отработки навыков работы с состоянием, хранения данных и UI.
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Функционал
+- **Добавление задач:** Можно указать название и дату (через календарь).
+- **Список задач:** Отображение списка с чекбоксами.
+- **Сортировка:** Выполненные задачи автоматически уходят вниз списка.
+- **Удаление:** Свайп влево/вправо для удаления (Dismissible).
+- **Сохранение данных:** Задачи сохраняются локально (SharedPreferences) и не пропадают при перезапуске.
+- **Редактирование:** Можно изменить текст задачи.
