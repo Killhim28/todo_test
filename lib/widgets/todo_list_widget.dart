@@ -1,0 +1,76 @@
+import 'package:flutter/material.dart';
+
+// Виджет хранения задач
+class TodoListWidget extends StatelessWidget {
+  final List<Map<String, dynamic>> todos;
+  final Function(int) onDelete;
+  final Function(int, bool) onToggle;
+  final Function(int) onEditTodo;
+
+  const TodoListWidget({
+    super.key,
+    required this.todos,
+    required this.onDelete,
+    required this.onToggle,
+    required this.onEditTodo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final sortedTodos = todos.toList()
+      ..sort((a, b) {
+        if (a['completed'] == b['completed']) return 0;
+        return a['completed'] ? 1 : -1;
+      });
+
+    return ListView.builder(
+      itemCount: sortedTodos.length,
+      itemBuilder: (context, index) {
+        final item = sortedTodos[index];
+        final DateTime date = todos[index]['date'];
+        final bool isDone = item['completed'] ?? false;
+
+        return Dismissible(
+          key: Key(todos[index]['date'].toString()),
+          background: Container(
+            color: Colors.red,
+            alignment: Alignment.centerRight,
+            padding: EdgeInsets.only(right: 20),
+            child: Icon(Icons.delete),
+          ),
+          onDismissed: (direction) {
+            final originalIndex = todos.indexOf(
+              item,
+            ); // indexOf ищет в todos первый элемент и возвращает его индекс, иначе было бы неверное удаление
+            onDelete(originalIndex);
+          },
+          child: Card(
+            margin: const EdgeInsets.symmetric(horizontal: 3, vertical: 3),
+            child: ListTile(
+              leading: Checkbox(
+                value: isDone,
+                onChanged: (bool? newValue) {
+                  final originalIndex = todos.indexOf(item);
+                  onToggle(originalIndex, newValue ?? false);
+                },
+              ),
+              title: Text(
+                item['title'],
+                style: TextStyle(
+                  decoration: isDone ? TextDecoration.lineThrough : null,
+                  color: isDone ? Colors.grey : null,
+                ),
+              ),
+              onTap: () {
+                onEditTodo(todos.indexOf(item));
+              },
+              subtitle: Text(
+                '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}',
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
