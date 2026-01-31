@@ -20,9 +20,7 @@ class TodoApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('ru', 'RU'), // Русский
-      ],
+      supportedLocales: const [Locale('ru', 'RU')],
       locale: const Locale('ru', 'RU'),
       home: const TodoScreen(),
     );

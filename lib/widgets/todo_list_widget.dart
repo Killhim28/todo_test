@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import '../models/todo_class.dart'; // Класс Todo
 
 // Виджет хранения задач
 class TodoListWidget extends StatelessWidget {
-  final List<Map<String, dynamic>> todos;
+  final List<Todo> todos;
   final Function(int) onDelete;
   final Function(int, bool) onToggle;
   final Function(int) onEditTodo;
@@ -19,19 +20,19 @@ class TodoListWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final sortedTodos = todos.toList()
       ..sort((a, b) {
-        if (a['completed'] == b['completed']) return 0;
-        return a['completed'] ? 1 : -1;
+        if (a.completed == b.completed) return 0;
+        return a.completed ? 1 : -1;
       });
 
     return ListView.builder(
       itemCount: sortedTodos.length,
       itemBuilder: (context, index) {
         final item = sortedTodos[index];
-        final DateTime date = todos[index]['date'];
-        final bool isDone = item['completed'] ?? false;
+        final DateTime date = item.date; // Нужно брать дату по новому индексу
+        final bool isDone = item.completed;
 
         return Dismissible(
-          key: Key(todos[index]['date'].toString()),
+          key: Key(todos[index].date.toString()),
           background: Container(
             color: Colors.red,
             alignment: Alignment.centerRight,
@@ -55,7 +56,7 @@ class TodoListWidget extends StatelessWidget {
                 },
               ),
               title: Text(
-                item['title'],
+                item.title,
                 style: TextStyle(
                   decoration: isDone ? TextDecoration.lineThrough : null,
                   color: isDone ? Colors.grey : null,

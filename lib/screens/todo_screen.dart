@@ -4,6 +4,7 @@ import 'dart:convert'; // Для работы с JSON
 
 import '../widgets/todo_input_widget.dart'; // Виджет ввода текста в поле ввода задачи
 import '../widgets/todo_list_widget.dart'; // Виджет хранения задач
+import '../models/todo_class.dart'; // Класс Todo
 
 // Виджет с сохранением состояния поля планера задач
 class TodoScreen extends StatefulWidget {
@@ -15,7 +16,7 @@ class TodoScreen extends StatefulWidget {
 
 class _TodoScreenState extends State<TodoScreen> {
   final TextEditingController _controller = TextEditingController();
-  final List<Map<String, dynamic>> _todos = [];
+  final List<Todo> _todos = [];
   DateTime? _tempSelectedDate;
 
   // Метод открытия календаря
@@ -38,11 +39,14 @@ class _TodoScreenState extends State<TodoScreen> {
   void _addTodo() {
     if (_controller.text.isNotEmpty) {
       setState(() {
-        _todos.add({
-          "title": _controller.text,
-          "date": _tempSelectedDate ?? DateTime.now(),
-          "completed": false,
-        });
+        _todos.add(
+          Todo(
+            id: DateTime.now().millisecondsSinceEpoch
+                .toString(), // Добавляем уникальный id
+            title: _controller.text,
+            date: _tempSelectedDate ?? DateTime.now(),
+          ),
+        );
         _controller.clear();
         _tempSelectedDate = null; // Сбрасываем дату после добавления
       });
@@ -92,9 +96,9 @@ class _TodoScreenState extends State<TodoScreen> {
 
   // Метод редактирования задач
   void _showEditSheet(int index) {
-    _controller.text = _todos[index]['title'];
+    _controller.text = _todos[index].title;
     _tempSelectedDate =
-        _todos[index]['date']; // Загружаем старую дату тоже (если она есть)
+        _todos[index].date; // Загружаем старую дату тоже (если она есть)
 
     showModalBottomSheet(
       context: context,
@@ -114,13 +118,15 @@ class _TodoScreenState extends State<TodoScreen> {
                   controller: _controller,
                   onAddPressed: () {
                     if (_controller.text.isNotEmpty) {
+                      // Замена объекта Todo c новым полем title
                       setState(() {
-                        _todos[index] = {
-                          "title": _controller.text,
-                          "date":
-                              _tempSelectedDate ?? (DateTime.now().toString()),
-                          "completed": _todos[index]['completed'],
-                        };
+                        _todos[index] = Todo(
+                          id: _todos[index].id,
+                          title: _controller.text,
+                          date: _tempSelectedDate ?? DateTime.now(),
+                          completed: _todos[index]
+                              .completed, // Сохранение старого статуса
+                        );
                         _controller.clear();
                         _tempSelectedDate = null;
                       });
@@ -144,7 +150,12 @@ class _TodoScreenState extends State<TodoScreen> {
   // Метод переключения галочки чекбокса
   void _toggleTodo(int index, bool value) {
     setState(() {
-      _todos[index]['completed'] = value; // Обновляем словарь todos состояния
+      _todos[index] = Todo(
+        id: _todos[index].id,
+        title: _todos[index].title,
+        date: _todos[index].date,
+        completed: value, // Обновляем словарь todos состояния
+      );
     });
     _saveTodos(); // Сохраняем после добавления
   }
@@ -153,33 +164,22 @@ class _TodoScreenState extends State<TodoScreen> {
   Future<void> _saveTodos() async {
     final prefs = await SharedPreferences.getInstance();
 
-    // Преобразуем список задач в список строк JSON
-    List<String> todosJson = _todos.map((todo) {
-      return jsonEncode({
-        'title': todo['title'],
-        'date': todo['date'].toIso8601String(),
-        'completed': todo['completed'],
-      });
-    }).toList();
+    // Вызываем .toJson() у каждого объекта
+    List<String> todosJson = _todos
+        .map((todo) => jsonEncode(todo.toJson()))
+        .toList();
     await prefs.setStringList('todos', todosJson);
   }
 
-  // Метод сохранения данных
   Future<void> _loadTodos() async {
     final prefs = await SharedPreferences.getInstance();
     final List<String>? todosJson = prefs.getStringList('todos');
     if (todosJson != null) {
       setState(() {
         _todos.clear();
+        // Превращаем строки обратно в объекты Todo
         _todos.addAll(
-          todosJson.map((todoString) {
-            final Map<String, dynamic> todoMap = jsonDecode(todoString);
-            return {
-              'title': todoMap['title'],
-              'date': DateTime.parse(todoMap['date']),
-              'completed': todoMap['completed'],
-            };
-          }).toList(),
+          todosJson.map((str) => Todo.fromJson(jsonDecode(str))).toList(),
         );
       });
     }
