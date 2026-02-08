@@ -20,8 +20,12 @@ class TodoListWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final sortedTodos = todos.toList()
       ..sort((a, b) {
-        if (a.completed == b.completed) return 0;
-        return a.completed ? 1 : -1;
+        if (a.completed != b.completed) {
+          return a.completed ? 1 : -1; // Cортировка выполенных задач вниз
+        }
+        return b.date.compareTo(
+          a.date,
+        ); // Если статус выполнения одинаковый, сортируем по дате
       });
 
     return ListView.builder(
@@ -32,7 +36,7 @@ class TodoListWidget extends StatelessWidget {
         final bool isDone = item.completed;
 
         return Dismissible(
-          key: Key(todos[index].date.toString()),
+          key: Key(item.id),
           background: Container(
             color: Colors.red,
             alignment: Alignment.centerRight,

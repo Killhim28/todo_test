@@ -120,10 +120,7 @@ class _TodoScreenState extends State<TodoScreen> {
                     if (_controller.text.isNotEmpty) {
                       // Замена объекта Todo c новым полем title
                       setState(() {
-                        _todos[index] = Todo(
-                          id: _todos[index].id,
-                          title: _controller.text,
-                          date: _tempSelectedDate ?? DateTime.now(),
+                        _todos[index].copyWith(
                           completed: _todos[index]
                               .completed, // Сохранение старого статуса
                         );
@@ -150,12 +147,9 @@ class _TodoScreenState extends State<TodoScreen> {
   // Метод переключения галочки чекбокса
   void _toggleTodo(int index, bool value) {
     setState(() {
-      _todos[index] = Todo(
-        id: _todos[index].id,
-        title: _todos[index].title,
-        date: _todos[index].date,
-        completed: value, // Обновляем словарь todos состояния
-      );
+      _todos[index] = _todos[index].copyWith(
+        completed: value,
+      ); // Обновляем словарь todos состояния
     });
     _saveTodos(); // Сохраняем после добавления
   }
@@ -171,6 +165,7 @@ class _TodoScreenState extends State<TodoScreen> {
     await prefs.setStringList('todos', todosJson);
   }
 
+  // Метод загрузки данных
   Future<void> _loadTodos() async {
     final prefs = await SharedPreferences.getInstance();
     final List<String>? todosJson = prefs.getStringList('todos');

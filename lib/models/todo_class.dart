@@ -1,8 +1,9 @@
 class Todo {
-  final String id; // Уникальный ID (чтобы точно знать, какую задачу
+  final String
+  id; // Уникальный ID (чтобы точно знать, какую задачу редактировать)
   final String title; // Название
   final DateTime date; // Дата
-  final bool completed; // Статус задачи (не final, так как можем редактировать)
+  final bool completed;
 
   Todo({
     required this.id,
@@ -10,6 +11,15 @@ class Todo {
     required this.date,
     this.completed = false,
   });
+  // Метод copyWith
+  Todo copyWith({String? id, String? title, DateTime? date, bool? completed}) {
+    return Todo(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      date: date ?? this.date,
+      completed: completed ?? this.completed,
+    );
+  }
 
   // Превращаем JSON (Map) в объект Todo
   factory Todo.fromJson(Map<String, dynamic> json) {
