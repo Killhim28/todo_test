@@ -5,6 +5,7 @@ import 'dart:convert'; // Для работы с JSON
 import '../widgets/todo_input_widget.dart'; // Виджет ввода текста в поле ввода задачи
 import '../widgets/todo_list_widget.dart'; // Виджет хранения задач
 import '../models/todo_class.dart'; // Класс Todo
+import '../screens/trash_screen.dart';
 
 // Виджет с сохранением состояния поля планера задач
 class TodoScreen extends StatefulWidget {
@@ -17,6 +18,7 @@ class TodoScreen extends StatefulWidget {
 class _TodoScreenState extends State<TodoScreen> {
   final TextEditingController _controller = TextEditingController();
   final List<Todo> _todos = [];
+  final List<Todo> _deletedTodos = [];
   DateTime? _tempSelectedDate;
 
   // Метод открытия календаря
@@ -57,9 +59,36 @@ class _TodoScreenState extends State<TodoScreen> {
   // Метод удаления задачи
   void _removeTodo(int index) {
     setState(() {
+      final removedItem = _todos[index];
       _todos.removeAt(index);
+      _deletedTodos.add(removedItem);
+      _controller.clear();
     });
-    _saveTodos(); // Сохраняем после добавления
+    // Сохраняем после удаления
+    _saveTodos();
+    _saveDeletedtodos();
+  }
+
+  // Метод перманентного удаления из корзины
+  void _deletePermanently(String id) {
+    setState(() {
+      _deletedTodos.removeWhere((item) => item.id == id);
+    });
+    _saveDeletedtodos();
+  }
+
+  // Метод востановления задачи из корзины
+  void _restoreTodo(Todo todo) {
+    setState(() {
+      _deletedTodos.removeWhere((item) => item.id == todo.id);
+      final bool alreadyExists = _todos.any((item) => item.id == todo.id);
+      if (!alreadyExists) {
+        _todos.add(todo);
+      }
+    });
+    // Сохраняем после удаления
+    _saveTodos();
+    _saveDeletedtodos();
   }
 
   // Метод шторки
@@ -165,6 +194,16 @@ class _TodoScreenState extends State<TodoScreen> {
     await prefs.setStringList('todos', todosJson);
   }
 
+  // Метод сохранения данных корзины
+  Future<void> _saveDeletedtodos() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    List<String> deletedJson = _deletedTodos
+        .map((todo) => jsonEncode(todo.toJson()))
+        .toList();
+    await prefs.setStringList('deleted_todos', deletedJson);
+  }
+
   // Метод загрузки данных
   Future<void> _loadTodos() async {
     final prefs = await SharedPreferences.getInstance();
@@ -178,6 +217,29 @@ class _TodoScreenState extends State<TodoScreen> {
         );
       });
     }
+    final List<String>? deletedJson = prefs.getStringList('deleted_todos');
+    if (deletedJson != null) {
+      setState(() {
+        _deletedTodos.clear();
+        _deletedTodos.addAll(
+          deletedJson.map((str) => Todo.fromJson(jsonDecode(str))).toList(),
+        );
+      });
+    }
+  }
+
+  // Метод открытия экрана
+  void _openTrashScreen() {
+    Navigator.push(
+      context, // "откуда" мы переходим (с текущего экрана)
+      MaterialPageRoute(
+        builder: (context) => TrashScreen(
+          deletedTodos: _deletedTodos,
+          onRestore: _restoreTodo, // передаем наш список в новый экран
+          onDeleteForever: _deletePermanently,
+        ),
+      ),
+    );
   }
 
   @override
@@ -189,7 +251,48 @@ class _TodoScreenState extends State<TodoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Добро пожаловать в планер дня :)')),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.deepPurple),
+              child: Text(
+                'Меню планера',
+                style: TextStyle(color: Colors.white, fontSize: 20),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline),
+              title: const Text('Корзина'),
+              onTap: () {
+                Navigator.pop(context);
+                _openTrashScreen();
+              },
+            ),
+          ],
+        ),
+      ),
+      appBar: AppBar(
+        title: const Text('Планер дня :)'),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TrashScreen(
+                    deletedTodos: _deletedTodos,
+                    onRestore: _restoreTodo,
+                    onDeleteForever: _deletePermanently,
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.delete_outline),
+          ),
+        ],
+      ),
       body: _todos.isEmpty
           ? const Center(child: Text("Задач нет. Добавим первую?"))
           : TodoListWidget(
