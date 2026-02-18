@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/todo_class.dart'; // Класс Todo
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 // Виджет хранения задач
 class TodoListWidget extends StatelessWidget {
@@ -7,6 +8,7 @@ class TodoListWidget extends StatelessWidget {
   final Function(int) onDelete;
   final Function(int, bool) onToggle;
   final Function(int) onEditTodo;
+  final Function(String) onDeleteForever;
 
   const TodoListWidget({
     super.key,
@@ -14,6 +16,7 @@ class TodoListWidget extends StatelessWidget {
     required this.onDelete,
     required this.onToggle,
     required this.onEditTodo,
+    required this.onDeleteForever,
   });
 
   @override
@@ -35,20 +38,44 @@ class TodoListWidget extends StatelessWidget {
         final DateTime date = item.date; // Нужно брать дату по новому индексу
         final bool isDone = item.completed;
 
-        return Dismissible(
-          key: Key(item.id),
-          background: Container(
-            color: Colors.red,
-            alignment: Alignment.centerRight,
-            padding: EdgeInsets.only(right: 20),
-            child: Icon(Icons.delete),
+        return Slidable(
+          key: ValueKey(item.id),
+          startActionPane: ActionPane(
+            motion: const ScrollMotion(),
+            children: [
+              SlidableAction(
+                onPressed: (context) {
+                  onDelete(todos.indexOf(item));
+                },
+                backgroundColor: Colors.pink,
+                foregroundColor: Colors.white,
+                icon: Icons.delete_outline,
+                label: 'Перенести в корзину',
+                borderRadius: const BorderRadius.horizontal(
+                  left: Radius.circular(10),
+                  right: Radius.circular(10),
+                ),
+              ),
+            ],
           ),
-          onDismissed: (direction) {
-            final originalIndex = todos.indexOf(
-              item,
-            ); // indexOf ищет в todos первый элемент и возвращает его индекс, иначе было бы неверное удаление
-            onDelete(originalIndex);
-          },
+          endActionPane: ActionPane(
+            motion: const ScrollMotion(),
+            children: [
+              SlidableAction(
+                onPressed: (context) {
+                  onEditTodo(todos.indexOf(item));
+                },
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                icon: Icons.edit,
+                label: 'Редактировать задачу',
+                borderRadius: const BorderRadius.horizontal(
+                  left: Radius.circular(10),
+                  right: Radius.circular(10),
+                ),
+              ),
+            ],
+          ),
           child: Card(
             margin: const EdgeInsets.symmetric(horizontal: 3, vertical: 3),
             child: ListTile(

@@ -300,6 +300,7 @@ class _TodoScreenState extends State<TodoScreen> {
               onDelete: _removeTodo,
               onToggle: _toggleTodo,
               onEditTodo: _showEditSheet,
+              onDeleteForever: _deletePermanently,
             ),
 
       floatingActionButton: FloatingActionButton(
