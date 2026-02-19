@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/todo_screen.dart';
+import 'services/todo_service.dart';
 
-void main() {
-  runApp(const TodoApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // Для SharedPreferences
+
+  final todoService = TodoService();
+
+  await todoService.loadTodos();
+
+  runApp(TodoApp(todoService: todoService));
 }
 
 // Основной виджет планера
 class TodoApp extends StatelessWidget {
-  const TodoApp({super.key});
+  final TodoService todoService;
+  const TodoApp({super.key, required this.todoService});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +30,7 @@ class TodoApp extends StatelessWidget {
       ],
       supportedLocales: const [Locale('ru', 'RU')],
       locale: const Locale('ru', 'RU'),
-      home: const TodoScreen(),
+      home: TodoScreen(todoService: todoService),
     );
   }
 }
