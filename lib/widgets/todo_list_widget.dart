@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import '../models/todo_class.dart'; // Класс Todo
 import 'package:flutter_slidable/flutter_slidable.dart';
+import '../extensions/date_extension.dart';
 
 // Виджет хранения задач
 class TodoListWidget extends StatelessWidget {
   final List<Todo> todos;
-  final Function(int) onDelete;
-  final Function(int, bool) onToggle;
-  final Function(int) onEditTodo;
+  final Function(String) onDelete;
+  final Function(String, bool) onToggle;
+  final Function(Todo) onEditTodo;
   final Function(String) onDeleteForever;
 
   const TodoListWidget({
@@ -44,13 +45,11 @@ class TodoListWidget extends StatelessWidget {
             motion: const ScrollMotion(),
             children: [
               SlidableAction(
-                onPressed: (context) {
-                  onDelete(todos.indexOf(item));
-                },
+                onPressed: (context) => {onDelete(item.id)},
                 backgroundColor: Colors.pink,
                 foregroundColor: Colors.white,
                 icon: Icons.delete_outline,
-                label: 'Перенести в корзину',
+                // label: 'Перенести в корзину',
                 borderRadius: const BorderRadius.horizontal(
                   left: Radius.circular(10),
                   right: Radius.circular(10),
@@ -62,13 +61,11 @@ class TodoListWidget extends StatelessWidget {
             motion: const ScrollMotion(),
             children: [
               SlidableAction(
-                onPressed: (context) {
-                  onEditTodo(todos.indexOf(item));
-                },
+                onPressed: (context) => {onEditTodo(item)},
                 backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
                 icon: Icons.edit,
-                label: 'Редактировать задачу',
+                // label: 'Редактировать задачу',
                 borderRadius: const BorderRadius.horizontal(
                   left: Radius.circular(10),
                   right: Radius.circular(10),
@@ -82,8 +79,7 @@ class TodoListWidget extends StatelessWidget {
               leading: Checkbox(
                 value: isDone,
                 onChanged: (bool? newValue) {
-                  final originalIndex = todos.indexOf(item);
-                  onToggle(originalIndex, newValue ?? false);
+                  onToggle(item.id, newValue ?? false);
                 },
               ),
               title: Text(
@@ -93,11 +89,10 @@ class TodoListWidget extends StatelessWidget {
                   color: isDone ? Colors.grey : null,
                 ),
               ),
-              onTap: () {
-                onEditTodo(todos.indexOf(item));
-              },
+              onTap: () => {onEditTodo(item)},
               subtitle: Text(
-                '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}',
+                date.toFriendlyString(),
+                // '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}',
               ),
             ),
           ),

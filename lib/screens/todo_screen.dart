@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert'; // Для работы с JSON
+
+import 'package:todo_test/services/todo_service.dart';
 
 import '../widgets/todo_input_widget.dart'; // Виджет ввода текста в поле ввода задачи
 import '../widgets/todo_list_widget.dart'; // Виджет хранения задач
@@ -9,7 +9,8 @@ import '../screens/trash_screen.dart';
 
 // Виджет с сохранением состояния поля планера задач
 class TodoScreen extends StatefulWidget {
-  const TodoScreen({super.key});
+  final TodoService todoService; // Принимаем сервис
+  const TodoScreen({super.key, required this.todoService});
 
   @override
   State<TodoScreen> createState() => _TodoScreenState();
@@ -17,8 +18,6 @@ class TodoScreen extends StatefulWidget {
 
 class _TodoScreenState extends State<TodoScreen> {
   final TextEditingController _controller = TextEditingController();
-  final List<Todo> _todos = [];
-  final List<Todo> _deletedTodos = [];
   DateTime? _tempSelectedDate;
 
   // Метод открытия календаря
@@ -35,60 +34,6 @@ class _TodoScreenState extends State<TodoScreen> {
         _tempSelectedDate = pickedDate; // Сохраняем выбор
       });
     }
-  }
-
-  // Метод добавления задачи и словарь с задачей
-  void _addTodo() {
-    if (_controller.text.isNotEmpty) {
-      setState(() {
-        _todos.add(
-          Todo(
-            id: DateTime.now().millisecondsSinceEpoch
-                .toString(), // Добавляем уникальный id
-            title: _controller.text,
-            date: _tempSelectedDate ?? DateTime.now(),
-          ),
-        );
-        _controller.clear();
-        _tempSelectedDate = null; // Сбрасываем дату после добавления
-      });
-      _saveTodos(); // Сохраняем после добавления
-    }
-  }
-
-  // Метод удаления задачи
-  void _removeTodo(int index) {
-    setState(() {
-      final removedItem = _todos[index];
-      _todos.removeAt(index);
-      _deletedTodos.add(removedItem);
-      _controller.clear();
-    });
-    // Сохраняем после удаления
-    _saveTodos();
-    _saveDeletedtodos();
-  }
-
-  // Метод перманентного удаления из корзины
-  void _deletePermanently(String id) {
-    setState(() {
-      _deletedTodos.removeWhere((item) => item.id == id);
-    });
-    _saveDeletedtodos();
-  }
-
-  // Метод востановления задачи из корзины
-  void _restoreTodo(Todo todo) {
-    setState(() {
-      _deletedTodos.removeWhere((item) => item.id == todo.id);
-      final bool alreadyExists = _todos.any((item) => item.id == todo.id);
-      if (!alreadyExists) {
-        _todos.add(todo);
-      }
-    });
-    // Сохраняем после удаления
-    _saveTodos();
-    _saveDeletedtodos();
   }
 
   // Метод шторки
@@ -110,7 +55,11 @@ class _TodoScreenState extends State<TodoScreen> {
                 child: TodoInputWidget(
                   controller: _controller,
                   onAddPressed: () {
-                    _addTodo();
+                    widget.todoService.addTodo(
+                      _controller.text,
+                      _tempSelectedDate ?? DateTime.now(),
+                    );
+                    _controller.clear();
                     Navigator.pop(context);
                   },
                   onDatePressed: _pickDate,
@@ -124,10 +73,9 @@ class _TodoScreenState extends State<TodoScreen> {
   }
 
   // Метод редактирования задач
-  void _showEditSheet(int index) {
-    _controller.text = _todos[index].title;
-    _tempSelectedDate =
-        _todos[index].date; // Загружаем старую дату тоже (если она есть)
+  void _showEditSheet(Todo todo) {
+    _controller.text = todo.title;
+    _tempSelectedDate = todo.date;
 
     showModalBottomSheet(
       context: context,
@@ -146,18 +94,12 @@ class _TodoScreenState extends State<TodoScreen> {
                 child: TodoInputWidget(
                   controller: _controller,
                   onAddPressed: () {
-                    if (_controller.text.isNotEmpty) {
-                      // Замена объекта Todo c новым полем title
-                      setState(() {
-                        _todos[index].copyWith(
-                          completed: _todos[index]
-                              .completed, // Сохранение старого статуса
-                        );
-                        _controller.clear();
-                        _tempSelectedDate = null;
-                      });
-                      _saveTodos(); // Сохраняем после добавления
-                    }
+                    widget.todoService.updateTodo(
+                      todo.id,
+                      _controller.text,
+                      _tempSelectedDate ?? DateTime.now(),
+                    );
+                    _controller.clear();
                     Navigator.pop(context);
                   },
                   onDatePressed: _pickDate,
@@ -167,65 +109,7 @@ class _TodoScreenState extends State<TodoScreen> {
           ),
         );
       },
-    ).whenComplete(() {
-      _controller.clear();
-      _tempSelectedDate = null;
-    });
-  }
-
-  // Метод переключения галочки чекбокса
-  void _toggleTodo(int index, bool value) {
-    setState(() {
-      _todos[index] = _todos[index].copyWith(
-        completed: value,
-      ); // Обновляем словарь todos состояния
-    });
-    _saveTodos(); // Сохраняем после добавления
-  }
-
-  // Метод сохранения данных
-  Future<void> _saveTodos() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    // Вызываем .toJson() у каждого объекта
-    List<String> todosJson = _todos
-        .map((todo) => jsonEncode(todo.toJson()))
-        .toList();
-    await prefs.setStringList('todos', todosJson);
-  }
-
-  // Метод сохранения данных корзины
-  Future<void> _saveDeletedtodos() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    List<String> deletedJson = _deletedTodos
-        .map((todo) => jsonEncode(todo.toJson()))
-        .toList();
-    await prefs.setStringList('deleted_todos', deletedJson);
-  }
-
-  // Метод загрузки данных
-  Future<void> _loadTodos() async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String>? todosJson = prefs.getStringList('todos');
-    if (todosJson != null) {
-      setState(() {
-        _todos.clear();
-        // Превращаем строки обратно в объекты Todo
-        _todos.addAll(
-          todosJson.map((str) => Todo.fromJson(jsonDecode(str))).toList(),
-        );
-      });
-    }
-    final List<String>? deletedJson = prefs.getStringList('deleted_todos');
-    if (deletedJson != null) {
-      setState(() {
-        _deletedTodos.clear();
-        _deletedTodos.addAll(
-          deletedJson.map((str) => Todo.fromJson(jsonDecode(str))).toList(),
-        );
-      });
-    }
+    );
   }
 
   // Метод открытия экрана
@@ -233,19 +117,9 @@ class _TodoScreenState extends State<TodoScreen> {
     Navigator.push(
       context, // "откуда" мы переходим (с текущего экрана)
       MaterialPageRoute(
-        builder: (context) => TrashScreen(
-          deletedTodos: _deletedTodos,
-          onRestore: _restoreTodo, // передаем наш список в новый экран
-          onDeleteForever: _deletePermanently,
-        ),
+        builder: (context) => TrashScreen(todoService: widget.todoService),
       ),
     );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _loadTodos();
   }
 
   @override
@@ -281,11 +155,8 @@ class _TodoScreenState extends State<TodoScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => TrashScreen(
-                    deletedTodos: _deletedTodos,
-                    onRestore: _restoreTodo,
-                    onDeleteForever: _deletePermanently,
-                  ),
+                  builder: (context) =>
+                      TrashScreen(todoService: widget.todoService),
                 ),
               );
             },
@@ -293,16 +164,22 @@ class _TodoScreenState extends State<TodoScreen> {
           ),
         ],
       ),
-      body: _todos.isEmpty
-          ? const Center(child: Text("Задач нет. Добавим первую?"))
-          : TodoListWidget(
-              todos: _todos,
-              onDelete: _removeTodo,
-              onToggle: _toggleTodo,
-              onEditTodo: _showEditSheet,
-              onDeleteForever: _deletePermanently,
-            ),
-
+      body: ListenableBuilder(
+        listenable: widget.todoService,
+        builder: (context, child) {
+          final currentTodos = widget.todoService.todos;
+          if (currentTodos.isEmpty) {
+            return const Center(child: Text("Задач нет"));
+          }
+          return TodoListWidget(
+            todos: currentTodos,
+            onDelete: (id) => widget.todoService.removeTodo(id),
+            onToggle: (id, val) => widget.todoService.toggleTodo(id, val),
+            onEditTodo: _showEditSheet,
+            onDeleteForever: (id) => widget.todoService.deletePermanently(id),
+          );
+        },
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddSheet,
         child: const Icon(Icons.add),
