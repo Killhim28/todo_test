@@ -15,15 +15,15 @@ extension DateFormating on DateTime {
     final difference = dateToCheck.difference(today).inDays;
 
     if (difference == 0) {
-      return "Сегодня";
+      return 'Сегодня';
     } else if (difference == 1) {
-      return "Завтра";
+      return 'Завтра';
     } else if (difference == -1) {
-      return "Вчера";
+      return 'Вчера';
     } else if (difference == 2) {
-      return "Послезавтра";
+      return 'Послезавтра (${day.toString().padLeft(2, '0')}.${month.toString().padLeft(2, '0')}.$year)';
     } else if (difference == -2) {
-      return "Позавчера";
+      return 'Позавчера (${day.toString().padLeft(2, '0')}.${month.toString().padLeft(2, '0')}.$year)';
     } else {
       return '${day.toString().padLeft(2, '0')}.${month.toString().padLeft(2, '0')}.$year';
     }

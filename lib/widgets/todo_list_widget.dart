@@ -10,6 +10,7 @@ class TodoListWidget extends StatelessWidget {
   final Function(String, bool) onToggle;
   final Function(Todo) onEditTodo;
   final Function(String) onDeleteForever;
+  final Function(Todo) onChangeDate;
 
   const TodoListWidget({
     super.key,
@@ -18,7 +19,18 @@ class TodoListWidget extends StatelessWidget {
     required this.onToggle,
     required this.onEditTodo,
     required this.onDeleteForever,
+    required this.onChangeDate,
   });
+  Color _getPriorityColor(TodoPriority priority) {
+    switch (priority) {
+      case TodoPriority.high:
+        return Colors.red;
+      case TodoPriority.medium:
+        return Colors.amber;
+      case TodoPriority.low:
+        return Colors.green;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,44 +51,54 @@ class TodoListWidget extends StatelessWidget {
         final DateTime date = item.date; // Нужно брать дату по новому индексу
         final bool isDone = item.completed;
 
-        return Slidable(
-          key: ValueKey(item.id),
-          startActionPane: ActionPane(
-            motion: const ScrollMotion(),
-            children: [
-              SlidableAction(
-                onPressed: (context) => {onDelete(item.id)},
-                backgroundColor: Colors.pink,
-                foregroundColor: Colors.white,
-                icon: Icons.delete_outline,
-                // label: 'Перенести в корзину',
-                borderRadius: const BorderRadius.horizontal(
-                  left: Radius.circular(10),
-                  right: Radius.circular(10),
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 3, vertical: 3),
+          clipBehavior: Clip.hardEdge,
+          child: Slidable(
+            key: ValueKey(item.id),
+            startActionPane: ActionPane(
+              extentRatio: 0.5,
+              motion: const ScrollMotion(),
+              children: [
+                SlidableAction(
+                  onPressed: (context) => {onEditTodo(item)},
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  icon: Icons.edit,
                 ),
-              ),
-            ],
-          ),
-          endActionPane: ActionPane(
-            motion: const ScrollMotion(),
-            children: [
-              SlidableAction(
-                onPressed: (context) => {onEditTodo(item)},
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                icon: Icons.edit,
-                // label: 'Редактировать задачу',
-                borderRadius: const BorderRadius.horizontal(
-                  left: Radius.circular(10),
-                  right: Radius.circular(10),
+                SlidableAction(
+                  onPressed: (context) => onChangeDate(item),
+                  backgroundColor: Colors.cyan,
+                  foregroundColor: Colors.white,
+                  icon: Icons.calendar_month_outlined,
                 ),
-              ),
-            ],
-          ),
-          child: Card(
-            margin: const EdgeInsets.symmetric(horizontal: 3, vertical: 3),
+              ],
+            ),
+            endActionPane: ActionPane(
+              extentRatio: 0.5,
+              motion: const ScrollMotion(),
+              children: [
+                SlidableAction(
+                  onPressed: (context) => onDelete(item.id),
+                  backgroundColor: Colors.pink,
+                  foregroundColor: Colors.white,
+                  icon: Icons.archive_outlined,
+                ),
+                SlidableAction(
+                  onPressed: (context) => onDeleteForever(item.id),
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  icon: Icons.delete_outline,
+                ),
+              ],
+            ),
             child: ListTile(
               leading: Checkbox(
+                activeColor: _getPriorityColor(item.priority),
+                side: BorderSide(
+                  color: _getPriorityColor(item.priority),
+                  width: 2,
+                ),
                 value: isDone,
                 onChanged: (bool? newValue) {
                   onToggle(item.id, newValue ?? false);

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import '../services/todo_service.dart';
 
 // Замена на Stateless, так как состояние теперь в Сервисе
-class TrashScreen extends StatelessWidget {
+class ArchiveScreen extends StatelessWidget {
   final TodoService todoService;
 
-  const TrashScreen({super.key, required this.todoService});
+  const ArchiveScreen({super.key, required this.todoService});
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +15,7 @@ class TrashScreen extends StatelessWidget {
       body: ListenableBuilder(
         listenable: todoService,
         builder: (context, child) {
-          // Берем список удаленных прямо из сервиса
+          // Берем список удаленных из сервиса
           final deletedTodos = todoService.deletedTodos;
 
           if (deletedTodos.isEmpty) {

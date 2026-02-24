@@ -6,16 +6,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 class TodoService extends ChangeNotifier {
   final List<Todo> _todos = []; // Приватный список (чтобы не поломали снаружи)
   final List<Todo> _deletedTodos = []; // Приватный список удаленных задач
+
   List<Todo> get todos => _todos; // Геттер для чтения списка
   List<Todo> get deletedTodos => _deletedTodos; // Геттер для чтения списка
 
   // Метод добавления задачи
-  void addTodo(String title, DateTime date) {
+  void addTodo(String title, DateTime date, TodoPriority priority) {
     if (title.isNotEmpty) {
       final newTodo = Todo(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         title: title,
         date: date,
+        priority: priority,
       );
       _todos.add(newTodo);
       // Сохраняем после удаления
@@ -41,6 +43,7 @@ class TodoService extends ChangeNotifier {
   // Метод перманентного удаления из корзины
   void deletePermanently(String id) {
     _deletedTodos.removeWhere((item) => item.id == id);
+    _todos.removeWhere((item) => item.id == id);
     _saveDeletedtodos();
     notifyListeners();
   }
@@ -102,6 +105,8 @@ class TodoService extends ChangeNotifier {
       notifyListeners();
     }
     final List<String>? deletedJson = prefs.getStringList('deleted_todos');
+
+    // Если поле не null, ищем совпадение в enum. Если null - ставим low.
     if (deletedJson != null) {
       _deletedTodos.clear();
       _deletedTodos.addAll(
@@ -112,10 +117,19 @@ class TodoService extends ChangeNotifier {
   }
 
   // Метод обновления задачи (для редактирования)
-  void updateTodo(String id, String newTitle, DateTime newDate) {
+  void updateTodo(
+    String id,
+    String newTitle,
+    DateTime newDate,
+    TodoPriority newPriority,
+  ) {
     final index = _todos.indexWhere((element) => element.id == id);
     if (index != -1) {
-      _todos[index] = _todos[index].copyWith(title: newTitle, date: newDate);
+      _todos[index] = _todos[index].copyWith(
+        title: newTitle,
+        date: newDate,
+        priority: newPriority,
+      );
       _saveTodos();
       notifyListeners();
     }
