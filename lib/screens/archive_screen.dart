@@ -10,7 +10,7 @@ class ArchiveScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Корзина")),
+      appBar: AppBar(title: const Text("Архив")),
       // ListenableBuilder следит за изменениями в сервисе
       body: ListenableBuilder(
         listenable: todoService,
@@ -19,7 +19,7 @@ class ArchiveScreen extends StatelessWidget {
           final deletedTodos = todoService.deletedTodos;
 
           if (deletedTodos.isEmpty) {
-            return const Center(child: Text("Корзина пуста"));
+            return const Center(child: Text("Архив пуст"));
           }
 
           return ListView.builder(
