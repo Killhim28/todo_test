@@ -23,6 +23,25 @@ class _TodoScreenState extends State<TodoScreen> {
       TodoFilter.all; // по умолчанию фильтр на всех задачах
   final TextEditingController _controller = TextEditingController();
   DateTime? _tempSelectedDate;
+  final Set<String> _selectedIds = {};
+
+  // Метод выделения/снятия выделения
+  void _toggleSelection(String id) {
+    setState(() {
+      if (_selectedIds.contains(id)) {
+        _selectedIds.remove(id); // Если уже выделено - убираем
+      } else {
+        _selectedIds.add(id); // Если нет - добавляем
+      }
+    });
+  }
+
+  // Сброс выделения (для кнопки крестика)
+  void _clearSelection() {
+    setState(() {
+      _selectedIds.clear();
+    });
+  }
 
   // Метод открытия календаря
   Future<void> _pickDate({Todo? todo}) async {
@@ -147,8 +166,10 @@ class _TodoScreenState extends State<TodoScreen> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.deepPurple),
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
+              ),
               child: Text(
                 'Меню планера',
                 style: TextStyle(color: Colors.white, fontSize: 20),
@@ -165,23 +186,40 @@ class _TodoScreenState extends State<TodoScreen> {
           ],
         ),
       ),
-      appBar: AppBar(
-        title: const Text('Планер дня :)'),
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      ArchiveScreen(todoService: widget.todoService),
+      appBar: _selectedIds.isNotEmpty
+          ? AppBar(
+              leading: IconButton(
+                onPressed: _clearSelection,
+                icon: const Icon(Icons.close),
+              ),
+              title: Text('Выбрано: ${_selectedIds.length}'),
+
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.archive_outlined),
+                  onPressed: () {
+                    widget.todoService.archiveMultiple(_selectedIds);
+                    _clearSelection(); // Сбрасываем выделение после действия
+                  },
                 ),
-              );
-            },
-            icon: const Icon(Icons.archive_outlined),
-          ),
-        ],
-      ),
+                IconButton(
+                  icon: const Icon(Icons.delete_forever),
+                  onPressed: () {
+                    widget.todoService.deleteMultiplyPermanetly(_selectedIds);
+                    _clearSelection();
+                  },
+                ),
+              ],
+            )
+          : AppBar(
+              title: const Text('Планер дня :)'),
+              actions: [
+                IconButton(
+                  onPressed: _openTrashScreen,
+                  icon: const Icon(Icons.archive_outlined),
+                ),
+              ],
+            ),
       body: Column(
         children: [
           Padding(
@@ -240,6 +278,8 @@ class _TodoScreenState extends State<TodoScreen> {
                   onDeleteForever: (id) =>
                       widget.todoService.deletePermanently(id),
                   onChangeDate: (todo) => _pickDate(todo: todo),
+                  selectedIds: _selectedIds,
+                  onSelect: _toggleSelection,
                 );
               },
             ),

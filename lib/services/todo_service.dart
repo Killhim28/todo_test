@@ -62,6 +62,20 @@ class TodoService extends ChangeNotifier {
     notifyListeners();
   }
 
+  void restoreTodoMultiple(Set<String> ids) {
+    for (var id in ids) {
+      final index = _deletedTodos.indexWhere((item) => item.id == id);
+      if (index != -1) {
+        final itemToRestore = _deletedTodos[index];
+        _todos.add(itemToRestore);
+        _deletedTodos.removeAt(index);
+      }
+    }
+    _saveTodos();
+    _saveDeletedtodos();
+    notifyListeners();
+  }
+
   // Редактирование задачи
   void toggleTodo(String id, bool value) {
     final index = _todos.indexWhere((item) => item.id == id);
@@ -70,6 +84,28 @@ class TodoService extends ChangeNotifier {
       _saveTodos(); // Сохраняем после добавления
       notifyListeners();
     }
+  }
+
+  void archiveMultiple(Set<String> ids) {
+    for (var id in ids) {
+      final index = _todos.indexWhere((item) => item.id == id);
+      if (index != -1) {
+        final removedItem = _todos[index];
+        _todos.removeAt(index);
+        _deletedTodos.add(removedItem);
+      }
+    }
+    _saveTodos();
+    _saveDeletedtodos();
+    notifyListeners();
+  }
+
+  void deleteMultiplyPermanetly(Set<String> ids) {
+    _todos.removeWhere((item) => ids.contains(item.id));
+    _deletedTodos.removeWhere((item) => ids.contains(item.id));
+    _saveTodos();
+    _saveDeletedtodos();
+    notifyListeners();
   }
 
   Future<void> _saveTodos() async {

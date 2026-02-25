@@ -11,6 +11,8 @@ class TodoListWidget extends StatelessWidget {
   final Function(Todo) onEditTodo;
   final Function(String) onDeleteForever;
   final Function(Todo) onChangeDate;
+  final Set<String> selectedIds;
+  final Function(String) onSelect;
 
   const TodoListWidget({
     super.key,
@@ -20,6 +22,8 @@ class TodoListWidget extends StatelessWidget {
     required this.onEditTodo,
     required this.onDeleteForever,
     required this.onChangeDate,
+    required this.selectedIds,
+    required this.onSelect,
   });
   Color _getPriorityColor(TodoPriority priority) {
     switch (priority) {
@@ -50,10 +54,15 @@ class TodoListWidget extends StatelessWidget {
         final item = sortedTodos[index];
         final DateTime date = item.date; // Нужно брать дату по новому индексу
         final bool isDone = item.completed;
+        final bool isSelected = selectedIds.contains(item.id);
+        final bool isSelectionMode = selectedIds.isNotEmpty;
 
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 3, vertical: 3),
           clipBehavior: Clip.hardEdge,
+          color: isSelected
+              ? Theme.of(context).colorScheme.primaryContainer
+              : null,
           child: Slidable(
             key: ValueKey(item.id),
             startActionPane: ActionPane(
@@ -80,19 +89,20 @@ class TodoListWidget extends StatelessWidget {
               children: [
                 SlidableAction(
                   onPressed: (context) => onDelete(item.id),
-                  backgroundColor: Colors.pink,
+                  backgroundColor: Colors.blueGrey,
                   foregroundColor: Colors.white,
                   icon: Icons.archive_outlined,
                 ),
                 SlidableAction(
                   onPressed: (context) => onDeleteForever(item.id),
-                  backgroundColor: Colors.red,
+                  backgroundColor: Colors.redAccent,
                   foregroundColor: Colors.white,
                   icon: Icons.delete_outline,
                 ),
               ],
             ),
             child: ListTile(
+              onLongPress: () => onSelect(item.id),
               leading: Checkbox(
                 activeColor: _getPriorityColor(item.priority),
                 side: BorderSide(
@@ -111,11 +121,13 @@ class TodoListWidget extends StatelessWidget {
                   color: isDone ? Colors.grey : null,
                 ),
               ),
-              onTap: () => {onEditTodo(item)},
-              subtitle: Text(
-                date.toFriendlyString(),
-                // '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}',
-              ),
+              onTap: () => {
+                if (isSelectionMode)
+                  {onSelect(item.id)}
+                else
+                  {onEditTodo(item)},
+              },
+              subtitle: Text(date.toFriendlyString()),
             ),
           ),
         );
