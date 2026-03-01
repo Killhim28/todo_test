@@ -1,173 +1,112 @@
 import 'package:flutter/material.dart';
+import 'package:todo_test/main.dart';
+import 'package:todo_test/objectbox.g.dart';
+import 'package:todo_test/services/todo_db.dart';
 import '../models/todo_class.dart';
-import 'dart:convert'; // Для работы с JSON
-import 'package:shared_preferences/shared_preferences.dart';
 
 class TodoService extends ChangeNotifier {
-  final List<Todo> _todos = []; // Приватный список (чтобы не поломали снаружи)
-  final List<Todo> _deletedTodos = []; // Приватный список удаленных задач
+  List<TodoDb> _deletedTodos = [];
+  List<TodoDb> _todos = [];
 
-  List<Todo> get todos => _todos; // Геттер для чтения списка
-  List<Todo> get deletedTodos => _deletedTodos; // Геттер для чтения списка
+  List<TodoDb> get todos => _todos;
+  List<TodoDb> get deletedTodos => _deletedTodos;
 
-  // Метод добавления задачи
-  void addTodo(String title, DateTime date, TodoPriority priority) {
-    if (title.isNotEmpty) {
-      final newTodo = Todo(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: title,
-        date: date,
-        priority: priority,
-      );
-      _todos.add(newTodo);
-      // Сохраняем после удаления
-      _saveTodos();
-      notifyListeners(); // Замена setState
-    }
+  TodoService() {
+    loadTodos(); // Загружаем данные из БД сразу, чтобы было отображение при первом запуске
   }
 
-  // Метод удаления задачи
-  void removeTodo(String id) {
-    final index = _todos.indexWhere((item) => item.id == id);
-    if (index != -1) {
-      final removedItem = _todos[index];
-      _todos.removeAt(index);
-      _deletedTodos.add(removedItem);
-      // Сохраняем после удаления
-      _saveTodos();
-      _saveDeletedtodos();
-      notifyListeners();
-    }
-  }
+  // выгружает данные из БД
+  void loadTodos() {
+    final activeQuery = objectbox.todoBox
+        .query(TodoDb_.isDeleted.equals(false))
+        .build();
+    _todos = activeQuery.find();
+    activeQuery.close();
 
-  // Метод перманентного удаления из корзины
-  void deletePermanently(String id) {
-    _deletedTodos.removeWhere((item) => item.id == id);
-    _todos.removeWhere((item) => item.id == id);
-    _saveDeletedtodos();
+    final trashQuery = objectbox.todoBox
+        .query(TodoDb_.isDeleted.equals(true))
+        .build();
+    _deletedTodos = trashQuery.find();
+    trashQuery.close();
+
     notifyListeners();
   }
 
-  // Метод востановления задачи из корзины
-  void restoreTodo(Todo todo) {
-    _deletedTodos.removeWhere((item) => item.id == todo.id);
-    final bool alreadyExists = _todos.any(
-      (item) => item.id == todo.id,
-    ); // Если задача уже существует, восстанавлиаем ее
-    if (!alreadyExists) {
-      _todos.add(todo);
-    }
-    _saveTodos();
-    _saveDeletedtodos();
-    notifyListeners();
+  void addTodo(TodoDb newTodo) {
+    objectbox.todoBox.put(newTodo);
+    loadTodos();
   }
 
-  void restoreTodoMultiple(Set<String> ids) {
-    for (var id in ids) {
-      final index = _deletedTodos.indexWhere((item) => item.id == id);
-      if (index != -1) {
-        final itemToRestore = _deletedTodos[index];
-        _todos.add(itemToRestore);
-        _deletedTodos.removeAt(index);
-      }
-    }
-    _saveTodos();
-    _saveDeletedtodos();
-    notifyListeners();
-  }
-
-  // Редактирование задачи
-  void toggleTodo(String id, bool value) {
-    final index = _todos.indexWhere((item) => item.id == id);
-    if (index != -1) {
-      _todos[index] = _todos[index].copyWith(completed: value);
-      _saveTodos(); // Сохраняем после добавления
-      notifyListeners();
+  void moveToTrash(int id) {
+    final todo = objectbox.todoBox.get(id);
+    if (todo != null) {
+      todo.isDeleted = true;
+      objectbox.todoBox.put(todo);
+      loadTodos();
     }
   }
 
-  void archiveMultiple(Set<String> ids) {
-    for (var id in ids) {
-      final index = _todos.indexWhere((item) => item.id == id);
-      if (index != -1) {
-        final removedItem = _todos[index];
-        _todos.removeAt(index);
-        _deletedTodos.add(removedItem);
-      }
-    }
-    _saveTodos();
-    _saveDeletedtodos();
-    notifyListeners();
-  }
-
-  void deleteMultiplyPermanetly(Set<String> ids) {
-    _todos.removeWhere((item) => ids.contains(item.id));
-    _deletedTodos.removeWhere((item) => ids.contains(item.id));
-    _saveTodos();
-    _saveDeletedtodos();
-    notifyListeners();
-  }
-
-  Future<void> _saveTodos() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    // Вызываем .toJson() у каждого объекта
-    List<String> todosJson = _todos
-        .map((todo) => jsonEncode(todo.toJson()))
-        .toList();
-    await prefs.setStringList('todos', todosJson);
-  }
-
-  // Метод сохранения данных корзины
-  Future<void> _saveDeletedtodos() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    List<String> deletedJson = _deletedTodos
-        .map((todo) => jsonEncode(todo.toJson()))
-        .toList();
-    await prefs.setStringList('deleted_todos', deletedJson);
-  }
-
-  // Метод загрузки данных
-  Future<void> loadTodos() async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String>? todosJson = prefs.getStringList('todos');
-    if (todosJson != null) {
-      _todos.clear();
-      // Превращаем строки обратно в объекты Todo
-      _todos.addAll(
-        todosJson.map((str) => Todo.fromJson(jsonDecode(str))).toList(),
-      );
-      notifyListeners();
-    }
-    final List<String>? deletedJson = prefs.getStringList('deleted_todos');
-
-    // Если поле не null, ищем совпадение в enum. Если null - ставим low.
-    if (deletedJson != null) {
-      _deletedTodos.clear();
-      _deletedTodos.addAll(
-        deletedJson.map((str) => Todo.fromJson(jsonDecode(str))).toList(),
-      );
-      notifyListeners();
+  void restoreTodo(int id) {
+    final todo = objectbox.todoBox.get(id);
+    if (todo != null) {
+      todo.isDeleted = false;
+      objectbox.todoBox.put(todo);
+      loadTodos();
     }
   }
 
-  // Метод обновления задачи (для редактирования)
+  void deletePermanently(int id) {
+    objectbox.todoBox.remove(id); // Удаляем из БД навсегда
+    loadTodos();
+  }
+
+  void toggleTodo(int id) {
+    final todo = objectbox.todoBox.get(id);
+    if (todo != null) {
+      todo.completed = !todo.completed;
+      objectbox.todoBox.put(todo);
+      loadTodos();
+    }
+  }
+
   void updateTodo(
-    String id,
+    int id,
     String newTitle,
     DateTime newDate,
     TodoPriority newPriority,
   ) {
-    final index = _todos.indexWhere((element) => element.id == id);
-    if (index != -1) {
-      _todos[index] = _todos[index].copyWith(
-        title: newTitle,
-        date: newDate,
-        priority: newPriority,
-      );
-      _saveTodos();
-      notifyListeners();
+    final todo = objectbox.todoBox.get(id);
+    if (todo != null) {
+      todo.title = newTitle;
+      todo.date = newDate;
+      todo.priority = newPriority;
+      objectbox.todoBox.put(todo);
+      loadTodos();
     }
+  }
+
+  // МНОЖЕСТВЕННЫЕ ДЕЙСТВИЯ
+
+  void archiveMultiple(Set<int> ids) {
+    final itemsToArchive = objectbox.todoBox.getMany(ids.toList());
+    for (var item in itemsToArchive) {
+      if (item != null) item.isDeleted = true;
+    }
+    objectbox.todoBox.putMany(itemsToArchive.whereType<TodoDb>().toList());
+    loadTodos();
+  }
+
+  void restoreTodoMultiple(Set<int> ids) {
+    final itemsToRestore = objectbox.todoBox.getMany(ids.toList());
+    for (var item in itemsToRestore) {
+      if (item != null) item.isDeleted = false;
+    }
+    objectbox.todoBox.putMany(itemsToRestore.whereType<TodoDb>().toList());
+    loadTodos();
+  }
+
+  void deleteMultiplyPermanetly(Set<int> ids) {
+    objectbox.todoBox.removeMany(ids.toList());
+    loadTodos();
   }
 }

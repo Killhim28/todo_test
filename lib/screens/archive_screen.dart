@@ -12,9 +12,9 @@ class ArchiveScreen extends StatefulWidget {
 }
 
 class _ArchiveScreenState extends State<ArchiveScreen> {
-  final Set<String> _selectedIds = {};
+  final Set<int> _selectedIds = {};
   // Метод выделения/снятия выделения
-  void _toggleSelection(String id) {
+  void _toggleSelection(int id) {
     setState(() {
       if (_selectedIds.contains(id)) {
         _selectedIds.remove(id); // Если уже выделено - убираем
@@ -54,7 +54,6 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                   onPressed: () {
                     widget.todoService.deleteMultiplyPermanetly(_selectedIds);
                     _clearSelection();
-                    
                   },
                 ),
               ],
@@ -75,7 +74,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
             itemBuilder: (context, index) {
               final todo = deletedTodos[index];
               final bool isSelected = _selectedIds.contains(todo.id);
-              
+
               return Card(
                 color: isSelected
                     ? Theme.of(context).colorScheme.primaryContainer

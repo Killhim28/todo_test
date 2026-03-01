@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:todo_test/services/todo_db.dart';
 import '../models/todo_class.dart'; // Класс Todo
 import 'package:flutter_slidable/flutter_slidable.dart';
 import '../extensions/date_extension.dart';
 
 // Виджет хранения задач
 class TodoListWidget extends StatelessWidget {
-  final List<Todo> todos;
-  final Function(String) onDelete;
-  final Function(String, bool) onToggle;
-  final Function(Todo) onEditTodo;
-  final Function(String) onDeleteForever;
-  final Function(Todo) onChangeDate;
-  final Set<String> selectedIds;
-  final Function(String) onSelect;
+  final List<TodoDb> todos;
+  final Function(int) onDelete;
+  final Function(int) onToggle;
+  final Function(TodoDb) onEditTodo;
+  final Function(int) onDeleteForever;
+  final Function(TodoDb) onChangeDate;
+  final Set<int> selectedIds;
+  final Function(int) onSelect;
 
   const TodoListWidget({
     super.key,
@@ -70,7 +71,7 @@ class TodoListWidget extends StatelessWidget {
               motion: const ScrollMotion(),
               children: [
                 SlidableAction(
-                  onPressed: (context) => {onEditTodo(item)},
+                  onPressed: (context) => onEditTodo(item),
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
                   icon: Icons.edit,
@@ -111,7 +112,7 @@ class TodoListWidget extends StatelessWidget {
                 ),
                 value: isDone,
                 onChanged: (bool? newValue) {
-                  onToggle(item.id, newValue ?? false);
+                  onToggle(item.id);
                 },
               ),
               title: Text(

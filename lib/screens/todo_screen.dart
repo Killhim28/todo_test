@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-
 import 'package:todo_test/services/todo_service.dart';
-
 import '../widgets/todo_input_widget.dart'; // Виджет ввода текста в поле ввода задачи
 import '../widgets/todo_list_widget.dart'; // Виджет хранения задач
-import '../models/todo_class.dart'; // Класс Todo
+import '../services/todo_db.dart';
 import 'archive_screen.dart';
 
 enum TodoFilter { all, active, completed }
@@ -23,10 +21,10 @@ class _TodoScreenState extends State<TodoScreen> {
       TodoFilter.all; // по умолчанию фильтр на всех задачах
   final TextEditingController _controller = TextEditingController();
   DateTime? _tempSelectedDate;
-  final Set<String> _selectedIds = {};
+  final Set<int> _selectedIds = {};
 
   // Метод выделения/снятия выделения
-  void _toggleSelection(String id) {
+  void _toggleSelection(int id) {
     setState(() {
       if (_selectedIds.contains(id)) {
         _selectedIds.remove(id); // Если уже выделено - убираем
@@ -44,7 +42,7 @@ class _TodoScreenState extends State<TodoScreen> {
   }
 
   // Метод открытия календаря
-  Future<void> _pickDate({Todo? todo}) async {
+  Future<void> _pickDate({TodoDb? todo}) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate:
@@ -59,7 +57,7 @@ class _TodoScreenState extends State<TodoScreen> {
         widget.todoService.updateTodo(
           todo.id,
           todo.title,
-          todo.date,
+          pickedDate,
           todo.priority,
         );
       } else {
@@ -89,11 +87,13 @@ class _TodoScreenState extends State<TodoScreen> {
                 child: TodoInputWidget(
                   controller: _controller,
                   onAddPressed: (prio) {
-                    widget.todoService.addTodo(
-                      _controller.text,
-                      _tempSelectedDate ?? DateTime.now(),
-                      prio,
+                    final newTodo = TodoDb(
+                      title: _controller.text,
+                      date: _tempSelectedDate ?? DateTime.now(),
+                      completed: false,
+                      priorityIndex: prio.index,
                     );
+                    widget.todoService.addTodo(newTodo);
                     _controller.clear();
                     Navigator.pop(context);
                   },
@@ -108,7 +108,7 @@ class _TodoScreenState extends State<TodoScreen> {
   }
 
   // Метод редактирования задач
-  void _showEditSheet(Todo todo) {
+  void _showEditSheet(TodoDb todo) {
     _controller.text = todo.title;
     _tempSelectedDate = todo.date;
 
@@ -255,7 +255,7 @@ class _TodoScreenState extends State<TodoScreen> {
               listenable: widget.todoService,
               builder: (context, child) {
                 final currentTodos = widget.todoService.todos;
-                List<Todo> filteredTodos = [];
+                List<TodoDb> filteredTodos = [];
                 if (_currentFilter == TodoFilter.all) {
                   filteredTodos = currentTodos;
                 } else if (_currentFilter == TodoFilter.active) {
@@ -272,8 +272,8 @@ class _TodoScreenState extends State<TodoScreen> {
                 }
                 return TodoListWidget(
                   todos: filteredTodos,
-                  onDelete: (id) => widget.todoService.removeTodo(id),
-                  onToggle: (id, val) => widget.todoService.toggleTodo(id, val),
+                  onDelete: (id) => widget.todoService.moveToTrash(id),
+                  onToggle: (id) => widget.todoService.toggleTodo(id),
                   onEditTodo: _showEditSheet,
                   onDeleteForever: (id) =>
                       widget.todoService.deletePermanently(id),

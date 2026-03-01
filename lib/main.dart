@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/todo_screen.dart';
 import 'services/todo_service.dart';
+import 'services/objectbox_helper.dart';
 
+late ObjectboxHelper objectbox;
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Для SharedPreferences
-
+  WidgetsFlutterBinding.ensureInitialized();
+  objectbox = await ObjectboxHelper.init();
   final todoService = TodoService();
-
-  await todoService.loadTodos();
 
   runApp(TodoApp(todoService: todoService));
 }
