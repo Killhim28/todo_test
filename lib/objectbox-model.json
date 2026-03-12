@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "1:5629181461626875574",
-      "lastPropertyId": "6:6250568901645301591",
+      "lastPropertyId": "7:3898299664421324797",
       "name": "TodoDb",
       "properties": [
         {
@@ -38,6 +38,11 @@
           "id": "6:6250568901645301591",
           "name": "isDeleted",
           "type": 1
+        },
+        {
+          "id": "7:3898299664421324797",
+          "name": "imagePath",
+          "type": 9
         }
       ],
       "relations": []

@@ -1,13 +1,18 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import '../models/todo_class.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as p;
 
 // Виджет ввода текста в поле ввода задачи
 class TodoInputWidget extends StatefulWidget {
   final TextEditingController controller;
 
-  final Function(TodoPriority priority) onAddPressed;
+  final Function(TodoPriority priority, String? imagePath) onAddPressed;
   final VoidCallback onDatePressed;
   final TodoPriority initialPriority;
+  final String? initialmagePath;
 
   const TodoInputWidget({
     super.key,
@@ -15,6 +20,7 @@ class TodoInputWidget extends StatefulWidget {
     required this.onAddPressed,
     required this.onDatePressed,
     this.initialPriority = TodoPriority.low,
+    required this.initialmagePath,
   });
 
   @override
@@ -22,7 +28,54 @@ class TodoInputWidget extends StatefulWidget {
 }
 
 class _TodoInputWidgetState extends State<TodoInputWidget> {
+  String? _attachedImagePath;
   late TodoPriority _selectedPriority;
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.camera);
+
+    if (image != null) {
+      print('Пользователь сделал фото');
+      final permanentPath = await _saveImagePermanently(image.path);
+      setState(() {
+        _attachedImagePath =
+            permanentPath; // Запоминаем путь в State, чтобы виджет знал, что фото прикреплено
+      });
+      print('Пользователь сделал фото $_attachedImagePath');
+    } else {
+      print("Пользователь не сделал фото");
+    }
+  }
+
+  void _showImageDialog(String imagePath) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(10),
+          child: Stack(
+            alignment: Alignment.topRight,
+            children: [
+              InteractiveViewer(
+                child: Image.file(File(imagePath), fit: BoxFit.contain),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<String> _saveImagePermanently(String temImagePath) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final fileName = p.basename(temImagePath);
+    final savedImagePath = p.join(directory.path, fileName);
+    final savedImage = await File(temImagePath).copy(savedImagePath);
+    return savedImage.path;
+  }
+
   Color _getPriorityColor(TodoPriority priority) {
     switch (priority) {
       case TodoPriority.high:
@@ -39,6 +92,7 @@ class _TodoInputWidgetState extends State<TodoInputWidget> {
     super.initState();
     // При открытии шторки берем цвет, который нам передали снаружи
     _selectedPriority = widget.initialPriority;
+    _attachedImagePath = widget.initialmagePath;
   }
 
   @override
@@ -47,11 +101,29 @@ class _TodoInputWidgetState extends State<TodoInputWidget> {
       padding: const EdgeInsets.all(10),
       child: Row(
         children: [
+          if (_attachedImagePath != null)
+            GestureDetector(
+              onTap: () {
+                _showImageDialog(_attachedImagePath!);
+              },
+              child: Container(
+                width: 58,
+                height: 58,
+                margin: const EdgeInsets.only(right: 10),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    File(_attachedImagePath!),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
           Expanded(
             child: TextField(
               autofocus: true,
               onSubmitted: (text) {
-                widget.onAddPressed(_selectedPriority);
+                widget.onAddPressed(_selectedPriority, _attachedImagePath);
               },
               controller: widget.controller,
               decoration: InputDecoration(
@@ -120,11 +192,24 @@ class _TodoInputWidgetState extends State<TodoInputWidget> {
                           ],
                     ),
                     IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: _pickImage,
+                      icon: Icon(Icons.camera_alt),
+                    ),
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                       onPressed: widget.onDatePressed,
                       icon: Icon(Icons.calendar_month),
                     ),
                     IconButton(
-                      onPressed: () => widget.onAddPressed(_selectedPriority),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () => widget.onAddPressed(
+                        _selectedPriority,
+                        _attachedImagePath,
+                      ),
                       icon: Icon(Icons.send),
                     ),
                   ],
@@ -134,7 +219,6 @@ class _TodoInputWidgetState extends State<TodoInputWidget> {
               ),
             ),
           ),
-          const SizedBox(width: 10),
         ],
       ),
     );

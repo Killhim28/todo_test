@@ -10,6 +10,7 @@ class TodoDb {
   DateTime date;
   bool completed;
   int priorityIndex;
+  String? imagePath;
 
   bool isDeleted;
   // enum напрямую в бд не передать
@@ -33,5 +34,6 @@ class TodoDb {
     required this.completed,
     required this.priorityIndex,
     this.isDeleted = false,
+    required this.imagePath,
   });
 }

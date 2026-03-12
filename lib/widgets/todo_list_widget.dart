@@ -128,7 +128,15 @@ class TodoListWidget extends StatelessWidget {
                 else
                   {onEditTodo(item)},
               },
-              subtitle: Text(date.toFriendlyString()),
+              subtitle: Row(
+                children: [
+                  Text(date.toFriendlyString()),
+                  if (item.imagePath != null) ...[
+                    const SizedBox(width: 8),
+                    const Icon(Icons.image, size: 16, color: Colors.grey),
+                  ],
+                ],
+              ),
             ),
           ),
         );

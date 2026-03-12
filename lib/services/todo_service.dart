@@ -74,12 +74,14 @@ class TodoService extends ChangeNotifier {
     String newTitle,
     DateTime newDate,
     TodoPriority newPriority,
+    String? newImagePath,
   ) {
     final todo = objectbox.todoBox.get(id);
     if (todo != null) {
       todo.title = newTitle;
       todo.date = newDate;
       todo.priority = newPriority;
+      todo.imagePath = newImagePath;
       objectbox.todoBox.put(todo);
       loadTodos();
     }

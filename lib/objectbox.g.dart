@@ -22,7 +22,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(1, 5629181461626875574),
     name: 'TodoDb',
-    lastPropertyId: const obx_int.IdUid(6, 6250568901645301591),
+    lastPropertyId: const obx_int.IdUid(7, 3898299664421324797),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -59,6 +59,12 @@ final _entities = <obx_int.ModelEntity>[
         id: const obx_int.IdUid(6, 6250568901645301591),
         name: 'isDeleted',
         type: 1,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(7, 3898299664421324797),
+        name: 'imagePath',
+        type: 9,
         flags: 0,
       ),
     ],
@@ -134,13 +140,17 @@ obx_int.ModelDefinition getObjectBoxModel() {
       },
       objectToFB: (TodoDb object, fb.Builder fbb) {
         final titleOffset = fbb.writeString(object.title);
-        fbb.startTable(7);
+        final imagePathOffset = object.imagePath == null
+            ? null
+            : fbb.writeString(object.imagePath!);
+        fbb.startTable(8);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, titleOffset);
         fbb.addInt64(2, object.date.millisecondsSinceEpoch);
         fbb.addBool(3, object.completed);
         fbb.addInt64(4, object.priorityIndex);
         fbb.addBool(5, object.isDeleted);
+        fbb.addOffset(6, imagePathOffset);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -177,6 +187,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
           14,
           false,
         );
+        final imagePathParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 16);
         final object = TodoDb(
           id: idParam,
           title: titleParam,
@@ -184,6 +197,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           completed: completedParam,
           priorityIndex: priorityIndexParam,
           isDeleted: isDeletedParam,
+          imagePath: imagePathParam,
         );
 
         return object;
@@ -222,5 +236,10 @@ class TodoDb_ {
   /// See [TodoDb.isDeleted].
   static final isDeleted = obx.QueryBooleanProperty<TodoDb>(
     _entities[0].properties[5],
+  );
+
+  /// See [TodoDb.imagePath].
+  static final imagePath = obx.QueryStringProperty<TodoDb>(
+    _entities[0].properties[6],
   );
 }

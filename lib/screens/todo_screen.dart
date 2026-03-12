@@ -59,6 +59,7 @@ class _TodoScreenState extends State<TodoScreen> {
           todo.title,
           pickedDate,
           todo.priority,
+          todo.imagePath,
         );
       } else {
         setState(() {
@@ -86,18 +87,20 @@ class _TodoScreenState extends State<TodoScreen> {
               child: SingleChildScrollView(
                 child: TodoInputWidget(
                   controller: _controller,
-                  onAddPressed: (prio) {
+                  onAddPressed: (prio, imagePath) {
                     final newTodo = TodoDb(
                       title: _controller.text,
                       date: _tempSelectedDate ?? DateTime.now(),
                       completed: false,
                       priorityIndex: prio.index,
+                      imagePath: imagePath,
                     );
                     widget.todoService.addTodo(newTodo);
                     _controller.clear();
                     Navigator.pop(context);
                   },
                   onDatePressed: _pickDate,
+                  initialmagePath: null,
                 ),
               ),
             ),
@@ -129,17 +132,19 @@ class _TodoScreenState extends State<TodoScreen> {
                 child: TodoInputWidget(
                   controller: _controller,
                   initialPriority: todo.priority,
-                  onAddPressed: (prio) {
+                  onAddPressed: (prio, imagePath) {
                     widget.todoService.updateTodo(
                       todo.id,
                       _controller.text,
                       _tempSelectedDate ?? DateTime.now(),
                       prio,
+                      imagePath,
                     );
                     _controller.clear();
                     Navigator.pop(context);
                   },
                   onDatePressed: _pickDate,
+                  initialmagePath: todo.imagePath,
                 ),
               ),
             ),
