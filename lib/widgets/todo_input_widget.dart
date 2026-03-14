@@ -36,15 +36,11 @@ class _TodoInputWidgetState extends State<TodoInputWidget> {
     final XFile? image = await picker.pickImage(source: ImageSource.camera);
 
     if (image != null) {
-      print('Пользователь сделал фото');
       final permanentPath = await _saveImagePermanently(image.path);
       setState(() {
         _attachedImagePath =
             permanentPath; // Запоминаем путь в State, чтобы виджет знал, что фото прикреплено
       });
-      print('Пользователь сделал фото $_attachedImagePath');
-    } else {
-      print("Пользователь не сделал фото");
     }
   }
 
