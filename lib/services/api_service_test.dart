@@ -9,16 +9,22 @@ class ApiServiceTest {
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseMap = response.data;
         final List data = responseMap['todos'];
-        List<String> taskTitles = [];
-
-        for (var item in data.take(3)) {
-          taskTitles.add(item['todo']);
-        }
-        return taskTitles;
+        return data
+            .take(3)
+            .map<String>((item) => item['todo'].toString())
+            .toList();
+      } else {
+        // Сервер ответил, но не 200 ОК
+        throw Exception('Ошибка сервера: код ${response.statusCode}');
       }
+    } on DioException catch (e) {
+      // Отлавливаем конкретно ошибки сети (нет интернета, таймаут)
+      throw Exception(
+        'Ошибка сети: проверьте подключение. Детали: ${e.message}',
+      );
     } catch (e) {
-      print("Ошибка сети: $e");
+      // Отлавливаем ошибки парсинга или другие сюрпризы
+      throw Exception('Что-то пошло не так: $e');
     }
-    return [];
   }
 }

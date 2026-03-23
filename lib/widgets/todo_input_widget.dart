@@ -1,9 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import '../models/todo_class.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart' as p;
 
 // Виджет ввода текста в поле ввода задачи
 class TodoInputWidget extends StatefulWidget {
@@ -31,58 +27,6 @@ class _TodoInputWidgetState extends State<TodoInputWidget> {
   String? _attachedImagePath;
   late TodoPriority _selectedPriority;
 
-  Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.camera);
-
-    if (image != null) {
-      final permanentPath = await _saveImagePermanently(image.path);
-      setState(() {
-        _attachedImagePath =
-            permanentPath; // Запоминаем путь в State, чтобы виджет знал, что фото прикреплено
-      });
-    }
-  }
-
-  void _showImageDialog(String imagePath) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(10),
-          child: Stack(
-            alignment: Alignment.topRight,
-            children: [
-              InteractiveViewer(
-                child: Image.file(File(imagePath), fit: BoxFit.contain),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<String> _saveImagePermanently(String temImagePath) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final fileName = p.basename(temImagePath);
-    final savedImagePath = p.join(directory.path, fileName);
-    final savedImage = await File(temImagePath).copy(savedImagePath);
-    return savedImage.path;
-  }
-
-  Color _getPriorityColor(TodoPriority priority) {
-    switch (priority) {
-      case TodoPriority.high:
-        return Colors.red;
-      case TodoPriority.medium:
-        return Colors.amber;
-      case TodoPriority.low:
-        return Colors.green;
-    }
-  }
-
   @override
   void initState() {
     super.initState();
@@ -97,24 +41,6 @@ class _TodoInputWidgetState extends State<TodoInputWidget> {
       padding: const EdgeInsets.all(10),
       child: Row(
         children: [
-          if (_attachedImagePath != null)
-            GestureDetector(
-              onTap: () {
-                _showImageDialog(_attachedImagePath!);
-              },
-              child: Container(
-                width: 58,
-                height: 58,
-                margin: const EdgeInsets.only(right: 10),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.file(
-                    File(_attachedImagePath!),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-            ),
           Expanded(
             child: TextField(
               autofocus: true,
@@ -132,7 +58,7 @@ class _TodoInputWidgetState extends State<TodoInputWidget> {
                       tooltip: "Выбрать приоритет",
                       icon: Icon(
                         Icons.error_outline,
-                        color: _getPriorityColor(_selectedPriority),
+                        color: getPriorityColor(_selectedPriority),
                       ),
                       onSelected: (TodoPriority newPriority) {
                         setState(() {
@@ -148,7 +74,7 @@ class _TodoInputWidgetState extends State<TodoInputWidget> {
                                 children: [
                                   Icon(
                                     Icons.circle,
-                                    color: _getPriorityColor(TodoPriority.low),
+                                    color: getPriorityColor(TodoPriority.low),
                                   ),
                                   const SizedBox(width: 10),
                                   const Text('Низкий приоритет'),
@@ -162,7 +88,7 @@ class _TodoInputWidgetState extends State<TodoInputWidget> {
                                 children: [
                                   Icon(
                                     Icons.circle,
-                                    color: _getPriorityColor(
+                                    color: getPriorityColor(
                                       TodoPriority.medium,
                                     ),
                                   ),
@@ -178,7 +104,7 @@ class _TodoInputWidgetState extends State<TodoInputWidget> {
                                 children: [
                                   Icon(
                                     Icons.circle,
-                                    color: _getPriorityColor(TodoPriority.high),
+                                    color: getPriorityColor(TodoPriority.high),
                                   ),
                                   const SizedBox(width: 10),
                                   const Text('Высокий приоритет'),
@@ -186,12 +112,6 @@ class _TodoInputWidgetState extends State<TodoInputWidget> {
                               ),
                             ),
                           ],
-                    ),
-                    IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: _pickImage,
-                      icon: Icon(Icons.camera_alt),
                     ),
                     IconButton(
                       padding: EdgeInsets.zero,

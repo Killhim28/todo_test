@@ -87,6 +87,20 @@ class TodoService extends ChangeNotifier {
     }
   }
 
+  void saveTodo(TodoDb todo) {
+    objectbox.todoBox.put(todo);
+    loadTodos();
+  }
+
+  void deleteSubtask(int subtaskId) {
+    objectbox.store.box<SubtaskDb>().remove(subtaskId);
+  }
+
+  void updateSubtask(SubtaskDb subtask) {
+    objectbox.store.box<SubtaskDb>().put(subtask);
+    loadTodos();
+  }
+
   // МНОЖЕСТВЕННЫЕ ДЕЙСТВИЯ
 
   void archiveMultiple(Set<int> ids) {

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:todo_test/models/todo_class.dart';
 import 'package:todo_test/services/api_service_test.dart';
 import 'package:todo_test/services/todo_service.dart';
 import '../widgets/todo_input_widget.dart'; // Виджет ввода текста в поле ввода задачи
 import '../widgets/todo_list_widget.dart'; // Виджет хранения задач
 import '../services/todo_db.dart';
-import 'archive_screen.dart';
 
 enum TodoFilter { all, active, completed }
 
@@ -158,12 +158,7 @@ class _TodoScreenState extends State<TodoScreen> {
 
   // Метод открытия экрана
   void _openTrashScreen() {
-    Navigator.push(
-      context, // "откуда" мы переходим (с текущего экрана)
-      MaterialPageRoute(
-        builder: (context) => ArchiveScreen(todoService: widget.todoService),
-      ),
-    );
+    context.push('/archive');
   }
 
   @override
@@ -186,7 +181,7 @@ class _TodoScreenState extends State<TodoScreen> {
               leading: const Icon(Icons.archive_outlined),
               title: const Text('Архив'),
               onTap: () {
-                Navigator.pop(context);
+                context.pop(); // Закрываем боковое меню вместо Navigator.pop
                 _openTrashScreen();
               },
             ),
@@ -195,32 +190,44 @@ class _TodoScreenState extends State<TodoScreen> {
               title: const Text('Тестовый запрос на dummyjson.com'),
               onTap: () async {
                 final api = ApiServiceTest();
-                final downloadedTitles = await api.fetchTestTodos();
+                try {
+                  final downloadedTitles = await api.fetchTestTodos();
 
-                if (downloadedTitles.isNotEmpty) {
-                  for (String title in downloadedTitles) {
-                    final newInternetTodo = TodoDb(
-                      title: title,
-                      date: DateTime.now(),
-                      completed: false,
-                      priorityIndex: TodoPriority.high.index,
-                      imagePath: null,
-                    );
-                    widget.todoService.addTodo(newInternetTodo);
-                  }
+                  if (downloadedTitles.isNotEmpty) {
+                    for (String title in downloadedTitles) {
+                      final newInternetTodo = TodoDb(
+                        title: title,
+                        date: DateTime.now(),
+                        completed: false,
+                        priorityIndex: TodoPriority.high.index,
+                        imagePath: null,
+                      );
+                      widget.todoService.addTodo(newInternetTodo);
+                    }
 
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Успешно добавлено ${downloadedTitles.length} задачи с API',
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Успешно добавлено ${downloadedTitles.length} задачи с API',
+                          ),
+                          backgroundColor: Colors.green,
+                          duration: const Duration(seconds: 5),
                         ),
-                        backgroundColor: Colors.green,
-                        duration: const Duration(seconds: 5),
-                      ),
-                    );
+                      );
+                    }
+                  } else {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Задачи не найдены'),
+                          backgroundColor: Colors.blueGrey,
+                          duration: const Duration(seconds: 5),
+                        ),
+                      );
+                    }
                   }
-                } else {
+                } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -243,7 +250,6 @@ class _TodoScreenState extends State<TodoScreen> {
                 icon: const Icon(Icons.close),
               ),
               title: Text('Выбрано: ${_selectedIds.length}'),
-
               actions: [
                 IconButton(
                   icon: const Icon(Icons.archive_outlined),
