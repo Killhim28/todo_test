@@ -5,9 +5,10 @@ import '../models/todo_class.dart';
 class TodoInputWidget extends StatefulWidget {
   final TextEditingController controller;
 
-  final Function(TodoPriority priority) onAddPressed;
+  final Function(TodoPriority priority, String? imagePath) onAddPressed;
   final VoidCallback onDatePressed;
   final TodoPriority initialPriority;
+  final String? initialmagePath;
 
   const TodoInputWidget({
     super.key,
@@ -15,6 +16,7 @@ class TodoInputWidget extends StatefulWidget {
     required this.onAddPressed,
     required this.onDatePressed,
     this.initialPriority = TodoPriority.low,
+    required this.initialmagePath,
   });
 
   @override
@@ -22,23 +24,15 @@ class TodoInputWidget extends StatefulWidget {
 }
 
 class _TodoInputWidgetState extends State<TodoInputWidget> {
+  String? _attachedImagePath;
   late TodoPriority _selectedPriority;
-  Color _getPriorityColor(TodoPriority priority) {
-    switch (priority) {
-      case TodoPriority.high:
-        return Colors.red;
-      case TodoPriority.medium:
-        return Colors.amber;
-      case TodoPriority.low:
-        return Colors.green;
-    }
-  }
 
   @override
   void initState() {
     super.initState();
     // При открытии шторки берем цвет, который нам передали снаружи
     _selectedPriority = widget.initialPriority;
+    _attachedImagePath = widget.initialmagePath;
   }
 
   @override
@@ -51,7 +45,7 @@ class _TodoInputWidgetState extends State<TodoInputWidget> {
             child: TextField(
               autofocus: true,
               onSubmitted: (text) {
-                widget.onAddPressed(_selectedPriority);
+                widget.onAddPressed(_selectedPriority, _attachedImagePath);
               },
               controller: widget.controller,
               decoration: InputDecoration(
@@ -64,7 +58,7 @@ class _TodoInputWidgetState extends State<TodoInputWidget> {
                       tooltip: "Выбрать приоритет",
                       icon: Icon(
                         Icons.error_outline,
-                        color: _getPriorityColor(_selectedPriority),
+                        color: getPriorityColor(_selectedPriority),
                       ),
                       onSelected: (TodoPriority newPriority) {
                         setState(() {
@@ -80,7 +74,7 @@ class _TodoInputWidgetState extends State<TodoInputWidget> {
                                 children: [
                                   Icon(
                                     Icons.circle,
-                                    color: _getPriorityColor(TodoPriority.low),
+                                    color: getPriorityColor(TodoPriority.low),
                                   ),
                                   const SizedBox(width: 10),
                                   const Text('Низкий приоритет'),
@@ -94,7 +88,7 @@ class _TodoInputWidgetState extends State<TodoInputWidget> {
                                 children: [
                                   Icon(
                                     Icons.circle,
-                                    color: _getPriorityColor(
+                                    color: getPriorityColor(
                                       TodoPriority.medium,
                                     ),
                                   ),
@@ -110,7 +104,7 @@ class _TodoInputWidgetState extends State<TodoInputWidget> {
                                 children: [
                                   Icon(
                                     Icons.circle,
-                                    color: _getPriorityColor(TodoPriority.high),
+                                    color: getPriorityColor(TodoPriority.high),
                                   ),
                                   const SizedBox(width: 10),
                                   const Text('Высокий приоритет'),
@@ -120,11 +114,18 @@ class _TodoInputWidgetState extends State<TodoInputWidget> {
                           ],
                     ),
                     IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                       onPressed: widget.onDatePressed,
                       icon: Icon(Icons.calendar_month),
                     ),
                     IconButton(
-                      onPressed: () => widget.onAddPressed(_selectedPriority),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () => widget.onAddPressed(
+                        _selectedPriority,
+                        _attachedImagePath,
+                      ),
                       icon: Icon(Icons.send),
                     ),
                   ],
@@ -134,7 +135,6 @@ class _TodoInputWidgetState extends State<TodoInputWidget> {
               ),
             ),
           ),
-          const SizedBox(width: 10),
         ],
       ),
     );

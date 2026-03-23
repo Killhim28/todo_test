@@ -10,6 +10,8 @@ class TodoDb {
   DateTime date;
   bool completed;
   int priorityIndex;
+  String? imagePath;
+  String? description;
 
   bool isDeleted;
   // enum напрямую в бд не передать
@@ -26,6 +28,9 @@ class TodoDb {
     priorityIndex = value.index;
   }
 
+  // ToMany означает, что у одной задачи может быть много подзадач
+  final subtasks = ToMany<SubtaskDb>();
+
   TodoDb({
     this.id = 0,
     required this.title,
@@ -33,5 +38,18 @@ class TodoDb {
     required this.completed,
     required this.priorityIndex,
     this.isDeleted = false,
+    required this.imagePath,
+    this.description,
   });
+}
+
+@Entity()
+class SubtaskDb {
+  @Id()
+  int id = 0;
+
+  String title; // Текст подзадачи
+  bool isDone; // Статус чекбокса
+
+  SubtaskDb({this.title = '', this.isDone = false});
 }

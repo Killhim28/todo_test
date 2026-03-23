@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "1:5629181461626875574",
-      "lastPropertyId": "6:6250568901645301591",
+      "lastPropertyId": "8:6504887366072919326",
       "name": "TodoDb",
       "properties": [
         {
@@ -38,14 +38,54 @@
           "id": "6:6250568901645301591",
           "name": "isDeleted",
           "type": 1
+        },
+        {
+          "id": "7:3898299664421324797",
+          "name": "imagePath",
+          "type": 9
+        },
+        {
+          "id": "8:6504887366072919326",
+          "name": "description",
+          "type": 9
+        }
+      ],
+      "relations": [
+        {
+          "id": "1:8424942040372593220",
+          "name": "subtasks",
+          "targetId": "2:7970770291968910797"
+        }
+      ]
+    },
+    {
+      "id": "2:7970770291968910797",
+      "lastPropertyId": "3:7851338796360261694",
+      "name": "SubtaskDb",
+      "properties": [
+        {
+          "id": "1:5072751235390202132",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:5422234089807070621",
+          "name": "title",
+          "type": 9
+        },
+        {
+          "id": "3:7851338796360261694",
+          "name": "isDone",
+          "type": 1
         }
       ],
       "relations": []
     }
   ],
-  "lastEntityId": "1:5629181461626875574",
+  "lastEntityId": "2:7970770291968910797",
   "lastIndexId": "0:0",
-  "lastRelationId": "0:0",
+  "lastRelationId": "1:8424942040372593220",
   "lastSequenceId": "0:0",
   "modelVersion": 5,
   "modelVersionParserMinimum": 5,

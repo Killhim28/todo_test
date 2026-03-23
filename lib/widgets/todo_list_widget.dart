@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:todo_test/services/todo_db.dart';
 import '../models/todo_class.dart'; // Класс Todo
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -26,16 +27,6 @@ class TodoListWidget extends StatelessWidget {
     required this.selectedIds,
     required this.onSelect,
   });
-  Color _getPriorityColor(TodoPriority priority) {
-    switch (priority) {
-      case TodoPriority.high:
-        return Colors.red;
-      case TodoPriority.medium:
-        return Colors.amber;
-      case TodoPriority.low:
-        return Colors.green;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,9 +96,12 @@ class TodoListWidget extends StatelessWidget {
             child: ListTile(
               onLongPress: () => onSelect(item.id),
               leading: Checkbox(
-                activeColor: _getPriorityColor(item.priority),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                activeColor: getPriorityColor(item.priority),
                 side: BorderSide(
-                  color: _getPriorityColor(item.priority),
+                  color: getPriorityColor(item.priority),
                   width: 2,
                 ),
                 value: isDone,
@@ -122,13 +116,22 @@ class TodoListWidget extends StatelessWidget {
                   color: isDone ? Colors.grey : null,
                 ),
               ),
-              onTap: () => {
-                if (isSelectionMode)
-                  {onSelect(item.id)}
-                else
-                  {onEditTodo(item)},
+              onTap: () {
+                if (isSelectionMode) {
+                  onSelect(item.id);
+                } else {
+                  context.push('/task/${item.id}');
+                }
               },
-              subtitle: Text(date.toFriendlyString()),
+              subtitle: Row(
+                children: [
+                  Text(date.toFriendlyString()),
+                  if (item.imagePath != null) ...[
+                    const SizedBox(width: 8),
+                    const Icon(Icons.image, size: 16, color: Colors.grey),
+                  ],
+                ],
+              ),
             ),
           ),
         );

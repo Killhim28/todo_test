@@ -74,15 +74,31 @@ class TodoService extends ChangeNotifier {
     String newTitle,
     DateTime newDate,
     TodoPriority newPriority,
+    String? newImagePath,
   ) {
     final todo = objectbox.todoBox.get(id);
     if (todo != null) {
       todo.title = newTitle;
       todo.date = newDate;
       todo.priority = newPriority;
+      todo.imagePath = newImagePath;
       objectbox.todoBox.put(todo);
       loadTodos();
     }
+  }
+
+  void saveTodo(TodoDb todo) {
+    objectbox.todoBox.put(todo);
+    loadTodos();
+  }
+
+  void deleteSubtask(int subtaskId) {
+    objectbox.store.box<SubtaskDb>().remove(subtaskId);
+  }
+
+  void updateSubtask(SubtaskDb subtask) {
+    objectbox.store.box<SubtaskDb>().put(subtask);
+    loadTodos();
   }
 
   // МНОЖЕСТВЕННЫЕ ДЕЙСТВИЯ

@@ -22,7 +22,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(1, 5629181461626875574),
     name: 'TodoDb',
-    lastPropertyId: const obx_int.IdUid(6, 6250568901645301591),
+    lastPropertyId: const obx_int.IdUid(8, 6504887366072919326),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -58,6 +58,52 @@ final _entities = <obx_int.ModelEntity>[
       obx_int.ModelProperty(
         id: const obx_int.IdUid(6, 6250568901645301591),
         name: 'isDeleted',
+        type: 1,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(7, 3898299664421324797),
+        name: 'imagePath',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(8, 6504887366072919326),
+        name: 'description',
+        type: 9,
+        flags: 0,
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[
+      obx_int.ModelRelation(
+        id: const obx_int.IdUid(1, 8424942040372593220),
+        name: 'subtasks',
+        targetId: const obx_int.IdUid(2, 7970770291968910797),
+      ),
+    ],
+    backlinks: <obx_int.ModelBacklink>[],
+  ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(2, 7970770291968910797),
+    name: 'SubtaskDb',
+    lastPropertyId: const obx_int.IdUid(3, 7851338796360261694),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 5072751235390202132),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(2, 5422234089807070621),
+        name: 'title',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(3, 7851338796360261694),
+        name: 'isDone',
         type: 1,
         flags: 0,
       ),
@@ -110,9 +156,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
     // Typically, this is done with `dart run build_runner build`.
     generatorVersion: obx_int.GeneratorVersion.v2025_12_16,
     entities: _entities,
-    lastEntityId: const obx_int.IdUid(1, 5629181461626875574),
+    lastEntityId: const obx_int.IdUid(2, 7970770291968910797),
     lastIndexId: const obx_int.IdUid(0, 0),
-    lastRelationId: const obx_int.IdUid(0, 0),
+    lastRelationId: const obx_int.IdUid(1, 8424942040372593220),
     lastSequenceId: const obx_int.IdUid(0, 0),
     retiredEntityUids: const [],
     retiredIndexUids: const [],
@@ -127,20 +173,30 @@ obx_int.ModelDefinition getObjectBoxModel() {
     TodoDb: obx_int.EntityDefinition<TodoDb>(
       model: _entities[0],
       toOneRelations: (TodoDb object) => [],
-      toManyRelations: (TodoDb object) => {},
+      toManyRelations: (TodoDb object) => {
+        obx_int.RelInfo<TodoDb>.toMany(1, object.id): object.subtasks,
+      },
       getId: (TodoDb object) => object.id,
       setId: (TodoDb object, int id) {
         object.id = id;
       },
       objectToFB: (TodoDb object, fb.Builder fbb) {
         final titleOffset = fbb.writeString(object.title);
-        fbb.startTable(7);
+        final imagePathOffset = object.imagePath == null
+            ? null
+            : fbb.writeString(object.imagePath!);
+        final descriptionOffset = object.description == null
+            ? null
+            : fbb.writeString(object.description!);
+        fbb.startTable(9);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, titleOffset);
         fbb.addInt64(2, object.date.millisecondsSinceEpoch);
         fbb.addBool(3, object.completed);
         fbb.addInt64(4, object.priorityIndex);
         fbb.addBool(5, object.isDeleted);
+        fbb.addOffset(6, imagePathOffset);
+        fbb.addOffset(7, descriptionOffset);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -177,6 +233,12 @@ obx_int.ModelDefinition getObjectBoxModel() {
           14,
           false,
         );
+        final imagePathParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 16);
+        final descriptionParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 18);
         final object = TodoDb(
           id: idParam,
           title: titleParam,
@@ -184,7 +246,48 @@ obx_int.ModelDefinition getObjectBoxModel() {
           completed: completedParam,
           priorityIndex: priorityIndexParam,
           isDeleted: isDeletedParam,
+          imagePath: imagePathParam,
+          description: descriptionParam,
         );
+        obx_int.InternalToManyAccess.setRelInfo<TodoDb>(
+          object.subtasks,
+          store,
+          obx_int.RelInfo<TodoDb>.toMany(1, object.id),
+        );
+        return object;
+      },
+    ),
+    SubtaskDb: obx_int.EntityDefinition<SubtaskDb>(
+      model: _entities[1],
+      toOneRelations: (SubtaskDb object) => [],
+      toManyRelations: (SubtaskDb object) => {},
+      getId: (SubtaskDb object) => object.id,
+      setId: (SubtaskDb object, int id) {
+        object.id = id;
+      },
+      objectToFB: (SubtaskDb object, fb.Builder fbb) {
+        final titleOffset = fbb.writeString(object.title);
+        fbb.startTable(4);
+        fbb.addInt64(0, object.id);
+        fbb.addOffset(1, titleOffset);
+        fbb.addBool(2, object.isDone);
+        fbb.finish(fbb.endTable());
+        return object.id;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+        final titleParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 6, '');
+        final isDoneParam = const fb.BoolReader().vTableGet(
+          buffer,
+          rootOffset,
+          8,
+          false,
+        );
+        final object = SubtaskDb(title: titleParam, isDone: isDoneParam)
+          ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
 
         return object;
       },
@@ -222,5 +325,38 @@ class TodoDb_ {
   /// See [TodoDb.isDeleted].
   static final isDeleted = obx.QueryBooleanProperty<TodoDb>(
     _entities[0].properties[5],
+  );
+
+  /// See [TodoDb.imagePath].
+  static final imagePath = obx.QueryStringProperty<TodoDb>(
+    _entities[0].properties[6],
+  );
+
+  /// See [TodoDb.description].
+  static final description = obx.QueryStringProperty<TodoDb>(
+    _entities[0].properties[7],
+  );
+
+  /// see [TodoDb.subtasks]
+  static final subtasks = obx.QueryRelationToMany<TodoDb, SubtaskDb>(
+    _entities[0].relations[0],
+  );
+}
+
+/// [SubtaskDb] entity fields to define ObjectBox queries.
+class SubtaskDb_ {
+  /// See [SubtaskDb.id].
+  static final id = obx.QueryIntegerProperty<SubtaskDb>(
+    _entities[1].properties[0],
+  );
+
+  /// See [SubtaskDb.title].
+  static final title = obx.QueryStringProperty<SubtaskDb>(
+    _entities[1].properties[1],
+  );
+
+  /// See [SubtaskDb.isDone].
+  static final isDone = obx.QueryBooleanProperty<SubtaskDb>(
+    _entities[1].properties[2],
   );
 }

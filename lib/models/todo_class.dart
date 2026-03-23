@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 enum TodoPriority { low, medium, high }
 
 class Todo {
@@ -30,5 +32,28 @@ class Todo {
       completed: completed ?? this.completed,
       priority: priority ?? this.priority,
     );
+  }
+}
+
+Color getPriorityColor(TodoPriority priority) {
+  switch (priority) {
+    case TodoPriority.high:
+      return Colors.red;
+    case TodoPriority.medium:
+      return Colors.amber;
+    case TodoPriority.low:
+      return Colors.green;
+  }
+}
+
+// Вспомогательный метод для текста
+String getPriorityText(TodoPriority priority) {
+  switch (priority) {
+    case TodoPriority.high:
+      return 'Высокий приоритет';
+    case TodoPriority.medium:
+      return 'Средний приоритет';
+    case TodoPriority.low:
+      return 'Низкий приоритет';
   }
 }
